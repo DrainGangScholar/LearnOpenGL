@@ -1,25 +1,24 @@
 #include "../include/glad/glad.h"
 #include <GLFW/glfw3.h>
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 #define GL_VERSION_MAJOR 4
 #define GL_VERSION_MINOR 6
 #define WIDTH 800
 #define HEIGHT 800
 #define WINDOW_TITLE "OPEN GL BOSS"
-const char *vertex_shader_source =
-    "#version 460 core\n"
-    "layout (location = 0) in vec3 v;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(v.x, v.y, v.z, 1.0);\n"
-    "}\0";
-const char *fragment_shader_source =
-    "#version 460 core\n"
-    "out vec4 frag_color;\n"
-    "void main()\n"
-    "{\n"
-    "   frag_coloor=vec4(0.0f,0.75f,0.5f,1.0f);\n"
-    "}\0";
+std::string read_shader(const std::string &path) {
+  std::ifstream file(path);
+  if (!file.is_open()) {
+    std::cerr << "Failed to open file: " << path << std::endl;
+    return "";
+  }
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
 
 int glfw_init(int gl_major, int gl_minor) {
   if (!glfwInit()) {
@@ -81,6 +80,12 @@ int main() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+  auto vs = read_shader("./shaders/vs.glsl/");
+  const char *vertex_shader_source = vs.c_str();
+  if (vs.empty()) {
+    std::cerr << "Couldn't load vertex shader" << std::endl;
+    return -1;
+  }
   unsigned int vertex_shader;
   vertex_shader = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex_shader, 1, &vertex_shader_source, nullptr);
@@ -99,7 +104,13 @@ int main() {
   std::fill(info_log, info_log + 512, 0);
 
   unsigned int fragment_shader;
-  vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+  auto fs = read_shader("./shaders/fs.glsl/");
+  const char *fragment_shader_source = fs.c_str();
+  if (fs.empty()) {
+    std::cerr << "Couldn't load fragment shader" << std::endl;
+    return -1;
+  }
+  fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment_shader, 1, &fragment_shader_source, nullptr);
 
   glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
@@ -111,8 +122,8 @@ int main() {
     return -1;
   }
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+//  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   unsigned int shader_program;
   shader_program = glCreateProgram();
@@ -124,7 +135,7 @@ int main() {
 
   glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
+    glGetShaderInfoLog(fragment_shader, 512, nullptr, info_log);
     std::cerr << "SHADER::PROGRAM::COMPILATION_FAILED\n"
               << info_log << std::endl;
     return -1;
