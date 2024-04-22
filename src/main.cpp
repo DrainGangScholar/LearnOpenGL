@@ -33,7 +33,7 @@ int glfw_init(int gl_major, int gl_minor) {
     return 0;
 }
 
-GLFWwindow *create_window(int width, int height, char *title) {
+GLFWwindow *create_window(int width, int height, const char *title) {
     GLFWwindow *window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (window == nullptr) {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -45,7 +45,7 @@ GLFWwindow *create_window(int width, int height, char *title) {
 }
 
 int init_glad() {
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cerr << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
@@ -81,20 +81,21 @@ int main() {
 
     glBindVertexArray(VAO);
 
-    float vertices[] = {-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f};
+    float vertices[] = {   0.0f,  0.5f,  0.0f,
+   0.5f, -0.5f,  0.0f,
+  -0.5f, -0.5f,  0.0f};
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    auto vs = read_shader("../shaders/vs.glsl");
+    const auto vs = read_shader("../shaders/vs.glsl");
     const char *vertex_shader_source = vs.c_str();
     if (vs.empty()) {
         std::cerr << "Couldn't load vertex shader" << std::endl;
         return -1;
     }
-    unsigned int vertex_shader;
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_source, nullptr);
 
     int failure;
@@ -110,14 +111,13 @@ int main() {
 
     std::fill(info_log, info_log + 512, 0);
 
-    unsigned int fragment_shader;
-    auto fs = read_shader("../shaders/fs.glsl");
+    const auto fs = read_shader("../shaders/fs.glsl");
     const char *fragment_shader_source = fs.c_str();
     if (fs.empty()) {
         std::cerr << "Couldn't load fragment shader" << std::endl;
         return -1;
     }
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment_shader, 1, &fragment_shader_source, nullptr);
 
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &failure);
@@ -132,8 +132,7 @@ int main() {
 //  glBindBuffer(GL_ARRAY_BUFFER, VBO);
 //  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    unsigned int shader_program;
-    shader_program = glCreateProgram();
+    const unsigned int shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
@@ -147,7 +146,7 @@ int main() {
                   << info_log << std::endl;
         return -1;
     }
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
 
     glUseProgram(shader_program);
