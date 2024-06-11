@@ -63,6 +63,26 @@ void process_input(GLFWwindow *window) {
     }
 }
 
+unsigned int init_shader(GLuint shader_type, std::string path) {
+    auto s = read_shader(path);
+    const char* shader_content = s.c_str();
+    if (s.empty()) {
+        std::cerr << "Couldn't load shader with path" << path << std::endl;
+        return 0;
+    }
+    unsigned int shader = glCreateShader(shader_type);
+    GLint failure;
+    glShaderSource(shader, 1, &shader_content, nullptr);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &failure);
+    glCompileShader(shader);
+    if (failure) {
+        glGetShaderInfoLog(shader, 0, nullptr, nullptr);
+        std::cerr << "SHADER::VERTERX::COMPILATION_FAILED\n"<< std::endl;
+        return -1;
+    }
+    return shader;
+}
+
 int main() {
     glfw_init(GL_VERSION_MAJOR, GL_VERSION_MINOR);
     GLFWwindow *window = create_window(WIDTH, HEIGHT, (char *) WINDOW_TITLE);
@@ -81,71 +101,28 @@ int main() {
 
     glBindVertexArray(VAO);
 
-    float vertices[] = {   0.0f,  0.5f,  0.0f,
-   0.5f, -0.5f,  0.0f,
-  -0.5f, -0.5f,  0.0f};
+    float vertices[]={
+            -0.5,0.5,0.0,
+            -0.5,-0.5,0.0,
+            0.5,-0.5,0.0,
+            -0.5,0.5,0.0,
+            0.5,-0.5,0.0,
+            0.5,0.5,0.0,
+    };
+
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    const auto vs = read_shader("../shaders/vs.glsl");
-    const char *vertex_shader_source = vs.c_str();
-    if (vs.empty()) {
-        std::cerr << "Couldn't load vertex shader" << std::endl;
-        return -1;
-    }
-    unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, nullptr);
-
-    int failure;
-    char info_log[512];
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &failure);
-    glCompileShader(vertex_shader);
-    if (failure) {
-        glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
-        std::cerr << "SHADER::VERTERX::COMPILATION_FAILED\n"
-                  << info_log << std::endl;
-        return -1;
-    }
-
-    std::fill(info_log, info_log + 512, 0);
-
-    const auto fs = read_shader("../shaders/fs.glsl");
-    const char *fragment_shader_source = fs.c_str();
-    if (fs.empty()) {
-        std::cerr << "Couldn't load fragment shader" << std::endl;
-        return -1;
-    }
-    unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, nullptr);
-
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &failure);
-    glCompileShader(fragment_shader);
-    if (failure) {
-        glGetShaderInfoLog(vertex_shader, 512, nullptr, info_log);
-        std::cerr << "SHADER::FRAGMENT::COMPILATION_FAILED\n"
-                  << info_log << std::endl;
-        return -1;
-    }
-
-//  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    unsigned int vertex_shader = init_shader(GL_VERTEX_SHADER,"../shaders/vs.glsl");
+    unsigned int fragment_shader = init_shader(GL_FRAGMENT_SHADER,"../shaders/fs.glsl");
 
     const unsigned int shader_program = glCreateProgram();
     glAttachShader(shader_program, vertex_shader);
     glAttachShader(shader_program, fragment_shader);
     glLinkProgram(shader_program);
 
-    std::fill(info_log, info_log + 512, 0);
-
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &failure);
-    if (!failure) {
-        glGetShaderInfoLog(fragment_shader, 512, nullptr, info_log);
-        std::cerr << "SHADER::PROGRAM::COMPILATION_FAILED\n"
-                  << info_log << std::endl;
-        return -1;
-    }
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
 
@@ -157,7 +134,7 @@ int main() {
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
