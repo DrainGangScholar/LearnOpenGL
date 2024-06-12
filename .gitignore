@@ -55,3 +55,4 @@ install_manifest.txt
 
 # Ignore any configuration files specific to your environment
 config.ini
+/cmake-build-debug/
