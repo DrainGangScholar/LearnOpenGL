@@ -1,7 +1,12 @@
 #include "glfw.h"
 #include "includes.h"
 #include "shader.h"
+#include <GLFW/glfw3.h>
+#include <cstdlib>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
 #include <ostream>
+#include <thread>
 #define GL_VERSION_MAJOR 4
 #define GL_VERSION_MINOR 2
 #define WIDTH 800
@@ -80,11 +85,11 @@ int main() {
   glEnableVertexAttribArray(2);
 
   Shader shader = Shader();
-  int vertex_color_location = glGetUniformLocation(shader.ID, "color");
-  int nrAttributes;
-  glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
-  std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes
-            << std::endl;
+  unsigned int transform_location =
+      glGetUniformLocation(shader.ID, "transform");
+  glm::mat4 transform = glm::mat4(1.0f);
+  glUniformMatrix4fv(transform_location, 1, GL_FALSE,
+                     glm::value_ptr(transform));
 
   shader.use();
   glUniform1i(glGetUniformLocation(shader.ID, "texture"), 0);
@@ -98,7 +103,15 @@ int main() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(0.5f, -0.25f, 0.0f));
+    transform = glm::rotate(transform, (float)glfwGetTime(),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
+
     shader.use();
+    glUniformMatrix4fv(transform_location, 1, GL_FALSE,
+                       glm::value_ptr(transform));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwPollEvents();
