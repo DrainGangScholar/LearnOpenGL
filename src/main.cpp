@@ -3,7 +3,7 @@
 #include "shader.h"
 #include <ostream>
 #define GL_VERSION_MAJOR 4
-#define GL_VERSION_MINOR 6
+#define GL_VERSION_MINOR 2
 #define WIDTH 800
 #define HEIGHT 800
 #define WINDOW_TITLE "OPEN GL BOSS"
