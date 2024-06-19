@@ -3,6 +3,7 @@
 class glfw {
 public:
   GLFWwindow *window;
+  int width, height;
 
 public:
   glfw() {}
@@ -18,11 +19,11 @@ public:
     if (init_glad()) {
       return;
     }
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, 600, 600);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   }
-  inline void terminate() { glfwTerminate(); }
 
+  inline void terminate() { glfwTerminate(); }
   inline int should_close() { return glfwWindowShouldClose(window); }
   inline void process_input() { process_input(window); }
 
@@ -50,7 +51,7 @@ private:
   }
 
   int init_glad() {
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
+    if (!gladLoadGLLoader((GLADloadproc)(glfwGetProcAddress))) {
       std::cerr << "Failed to initialize GLAD" << std::endl;
       return -1;
     }

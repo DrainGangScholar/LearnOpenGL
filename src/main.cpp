@@ -5,8 +5,8 @@
 #include <cstdlib>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <ostream>
-#include <thread>
 #define GL_VERSION_MAJOR 4
 #define GL_VERSION_MINOR 2
 #define WIDTH 800
@@ -49,70 +49,96 @@ int main() {
   glfw glfw;
   glfw.init(GL_VERSION_MAJOR, GL_VERSION_MINOR, WIDTH, HEIGHT, WINDOW_TITLE);
 
-  float vertices[] = {-0.5, 0.5,  0.0, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-                      -0.5, -0.5, 0.0, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-                      0.5,  -0.5, 0.0, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                      0.5,  0.5,  0.0, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f};
-  unsigned int indices[] = {0, 1, 2, 0, 2, 3};
+  float vertices[] = {
+      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
+      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-  unsigned int VBO, VAO, EBO;
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+
+      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
+      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
+      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
+  glm::vec3 cube_positions[] = {
+      glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+      glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+      glm::vec3(2.4f, -0.4f, -3.5f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+      glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+      glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
+
+  unsigned int VBO, VAO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
 
   glBindVertexArray(VAO);
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-               GL_STATIC_DRAW);
-
   // vertex
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
-  // color
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+  // texture
+  unsigned int texture_id = texture("awesomeface.png");
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-  // texture
-  //
-  // unsigned int texture_id = texture("wall.jpg");
-  unsigned int texture_id = texture("awesomeface.png");
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                        (void *)(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
 
   Shader shader = Shader();
-  unsigned int transform_location =
-      glGetUniformLocation(shader.ID, "transform");
-  glm::mat4 transform = glm::mat4(1.0f);
-  glUniformMatrix4fv(transform_location, 1, GL_FALSE,
-                     glm::value_ptr(transform));
-
   shader.use();
   glUniform1i(glGetUniformLocation(shader.ID, "texture"), 0);
+
+  glEnable(GL_DEPTH_TEST);
 
   while (!glfw.should_close()) {
     glfw.process_input();
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_id);
 
-    glm::mat4 transform = glm::mat4(1.0f);
-    transform = glm::translate(transform, glm::vec3(0.5f, -0.25f, 0.0f));
-    transform = glm::rotate(transform, (float)glfwGetTime(),
-                            glm::vec3(0.0f, 0.0f, 1.0f));
-
     shader.use();
-    glUniformMatrix4fv(transform_location, 1, GL_FALSE,
-                       glm::value_ptr(transform));
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glm::mat4 proj = glm::perspective(
+        glm::radians(45.0f), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+    unsigned int _proj = glGetUniformLocation(shader.ID, "projection");
+    glUniformMatrix4fv(_proj, 1, GL_FALSE, glm::value_ptr(proj));
+
+    unsigned int _model = glGetUniformLocation(shader.ID, "model");
+
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    unsigned int _view = glGetUniformLocation(shader.ID, "view");
+    glUniformMatrix4fv(_view, 1, GL_FALSE, glm::value_ptr(view));
+
+    glBindVertexArray(VAO);
+    for (unsigned int i = 0; i < 10; i++) {
+      float angle = (float)glfwGetTime() * glm::radians(50.0f);
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, cube_positions[i]);
+      if ((int)glfwGetTime() % 2 == 0) {
+        angle = -angle;
+      }
+      model = glm::rotate(model, angle, glm::vec3(0.5f, 1.0f, 0.0f));
+      glUniformMatrix4fv(_model, 1, GL_FALSE, glm::value_ptr(model));
+      glDrawArrays(GL_TRIANGLES, 0, 36);
+    }
 
     glfwPollEvents();
     glfwSwapBuffers(glfw.window);
@@ -120,7 +146,6 @@ int main() {
 
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO);
 
   shader.terminate();
   glfw.terminate();
