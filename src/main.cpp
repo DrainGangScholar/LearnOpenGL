@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/fwd.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <ostream>
 #define GL_VERSION_MAJOR 4
@@ -12,6 +13,28 @@
 #define WIDTH 800
 #define HEIGHT 800
 #define WINDOW_TITLE "OPEN GL BOSS"
+
+glm::vec3 position = glm::vec3(0.0, 0.0, 3.0);
+glm::vec3 front = glm::vec3(0.0, 0.0, -1.0);
+glm::vec3 up = glm::vec3(0.0, 1.0, 0.0);
+float speed = 0.05f;
+
+void process_input(GLFWwindow *window) {
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, true);
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    printf("Pressed W");
+    position += speed * front;
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    printf("Pressed W");
+  position -= speed * front;
+  std::cout << position.x << std::endl;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    position -= glm::normalize(glm::cross(front, up)) * speed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    position += glm::normalize(glm::cross(front, up)) * speed;
+}
 
 inline unsigned int texture(std::string name) {
   unsigned int texture;
@@ -104,8 +127,11 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
 
+  GLFWwindow *window = glfw.window;
+
   while (!glfw.should_close()) {
-    glfw.process_input();
+    //    glfw.process_input();
+    process_input(window);
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -122,8 +148,10 @@ int main() {
 
     unsigned int _model = glGetUniformLocation(shader.ID, "model");
 
-    glm::mat4 view = glm::mat4(1.0f);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+    const float radius = 10.0f;
+    float x = sin(glfwGetTime()) * radius;
+    float z = cos(glfwGetTime()) * radius;
+    glm::mat4 view = glm::lookAt(position, position + front, up);
     unsigned int _view = glGetUniformLocation(shader.ID, "view");
     glUniformMatrix4fv(_view, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -132,9 +160,6 @@ int main() {
       float angle = (float)glfwGetTime() * glm::radians(50.0f);
       glm::mat4 model = glm::mat4(1.0f);
       model = glm::translate(model, cube_positions[i]);
-      if ((int)glfwGetTime() % 2 == 0) {
-        angle = -angle;
-      }
       model = glm::rotate(model, angle, glm::vec3(0.5f, 1.0f, 0.0f));
       glUniformMatrix4fv(_model, 1, GL_FALSE, glm::value_ptr(model));
       glDrawArrays(GL_TRIANGLES, 0, 36);

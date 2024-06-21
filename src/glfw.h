@@ -25,7 +25,7 @@ public:
 
   inline void terminate() { glfwTerminate(); }
   inline int should_close() { return glfwWindowShouldClose(window); }
-  inline void process_input() { process_input(window); }
+  //  inline void process_input() { process_input(window); }
 
 private:
   int glfw_init(int gl_major, int gl_minor) {
@@ -62,11 +62,5 @@ private:
   static void framebuffer_size_callback(GLFWwindow *window, int width,
                                         int height) {
     glViewport(0, 0, width, height);
-  }
-
-  void process_input(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-      glfwSetWindowShouldClose(window, true);
-    }
   }
 };
