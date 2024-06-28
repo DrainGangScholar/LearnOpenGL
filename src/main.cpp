@@ -7,6 +7,7 @@
 #include <glm/fwd.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/trigonometric.hpp>
 #include <ostream>
 #define GL_VERSION_MAJOR 4
 #define GL_VERSION_MINOR 2
@@ -19,21 +20,70 @@ glm::vec3 front = glm::vec3(0.0, 0.0, -1.0);
 glm::vec3 up = glm::vec3(0.0, 1.0, 0.0);
 float speed = 0.05f;
 
+float delta_time = 0.0f;
+float last_frame = 0.0f;
+
+float pitch = 0.0f;
+float yaw = -90.0f;
+
+bool first_mouse = true;
+
+float last_x = WIDTH / 2.0, last_y = HEIGHT / 2.0;
+
 void process_input(GLFWwindow *window) {
-  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-    printf("Pressed W");
-    position += speed * front;
+    return;
   }
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    printf("Pressed W");
-  position -= speed * front;
-  std::cout << position.x << std::endl;
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    position += speed * front;
+    return;
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    position -= speed * front;
+    return;
+  }
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
     position -= glm::normalize(glm::cross(front, up)) * speed;
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    return;
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
     position += glm::normalize(glm::cross(front, up)) * speed;
+    return;
+  }
+}
+
+void mouse_callback(GLFWwindow *window) {
+  double x_pos, y_pos;
+  glfwGetCursorPos(window, &x_pos, &y_pos);
+  if (first_mouse) {
+    last_x = x_pos;
+    last_y = y_pos;
+    first_mouse = false;
+  }
+
+  float offset_x = x_pos - last_x;
+  float offset_y = y_pos - last_y;
+  last_x = x_pos;
+  last_y = y_pos;
+
+  const float sensitivity = 0.01f;
+  offset_x *= sensitivity;
+  offset_y *= sensitivity;
+  yaw += offset_x;
+  pitch += offset_y;
+  if (pitch > 89.0f) {
+    pitch = 89.0f;
+  }
+  if (pitch < -89.0f) {
+    pitch = -89.0f;
+  }
+
+  glm::vec3 direction;
+  direction.x = cos(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  direction.y = sin(glm::radians(pitch));
+  direction.z = sin(glm::radians(yaw)) * glm::cos(glm::radians(pitch));
+  front = glm::normalize(direction);
 }
 
 inline unsigned int texture(std::string name) {
@@ -96,6 +146,7 @@ int main() {
       -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
       0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
       -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
+
   glm::vec3 cube_positions[] = {
       glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
       glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
@@ -129,6 +180,8 @@ int main() {
 
   GLFWwindow *window = glfw.window;
 
+  glfwSetCursorPosCallback(glfw.window, (GLFWcursorposfun)mouse_callback);
+
   while (!glfw.should_close()) {
     //    glfw.process_input();
     process_input(window);
@@ -148,9 +201,6 @@ int main() {
 
     unsigned int _model = glGetUniformLocation(shader.ID, "model");
 
-    const float radius = 10.0f;
-    float x = sin(glfwGetTime()) * radius;
-    float z = cos(glfwGetTime()) * radius;
     glm::mat4 view = glm::lookAt(position, position + front, up);
     unsigned int _view = glGetUniformLocation(shader.ID, "view");
     glUniformMatrix4fv(_view, 1, GL_FALSE, glm::value_ptr(view));

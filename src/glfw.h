@@ -20,6 +20,7 @@ public:
       return;
     }
     glViewport(0, 0, 600, 600);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   }
 
